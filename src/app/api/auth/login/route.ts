@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { createSession, verifyPassword } from "@/lib/auth";
+import { BOOTSTRAP_ADMIN_ID, createSession, verifyPassword } from "@/lib/auth";
 
 function back(request: Request, message: string) {
   const url = new URL("/login", request.url);
@@ -15,6 +15,14 @@ export async function POST(request: Request) {
     const password = String(formData.get("password") || "");
 
     if (!email || !password) return back(request, "Preencha email e senha.");
+
+    const bootstrapEmail = process.env.ADMIN_BOOTSTRAP_EMAIL?.trim().toLowerCase();
+    const bootstrapPassword = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+
+    if (bootstrapEmail && bootstrapPassword && email === bootstrapEmail && password === bootstrapPassword) {
+      await createSession(BOOTSTRAP_ADMIN_ID);
+      return NextResponse.redirect(new URL("/admin", request.url), 303);
+    }
 
     const user = await db.user.findUnique({ where: { email } });
     if (!user || !verifyPassword(password, user.passwordHash)) {
