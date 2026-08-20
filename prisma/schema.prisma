@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role { USER ADMIN }
+enum UserStatus { ACTIVE BLOCKED }
+enum TournamentStatus { DRAFT OPEN LIVE FINISHED CANCELLED }
+enum RegistrationStatus { CONFIRMED CANCELLED WINNER }
+
+model User {
+  id             String         @id @default(cuid())
+  name           String
+  email          String         @unique
+  passwordHash   String
+  nickname       String?
+  freeFireUid    String?
+  phone          String?
+  role           Role           @default(USER)
+  status         UserStatus     @default(ACTIVE)
+  credits        Int            @default(100)
+  referralCode   String         @unique
+  referredById   String?
+  referredBy     User?          @relation("Referrals", fields: [referredById], references: [id])
+  referrals      User[]         @relation("Referrals")
+  registrations  Registration[]
+  rewards        Reward[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Tournament {
+  id              String             @id @default(cuid())
+  title           String
+  slug            String             @unique
+  description     String
+  mode            String             @default("Squad")
+  map             String             @default("Bermuda")
+  maxPlayers      Int                @default(48)
+  entryCredits    Int                @default(0)
+  prizeCredits    Int                @default(0)
+  startsAt        DateTime
+  status          TournamentStatus   @default(DRAFT)
+  rules           String
+  registrations   Registration[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model Registration {
+  id            String              @id @default(cuid())
+  userId        String
+  tournamentId  String
+  status        RegistrationStatus  @default(CONFIRMED)
+  placement     Int?
+  prizeCredits  Int                 @default(0)
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournament    Tournament          @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  createdAt     DateTime            @default(now())
+  @@unique([userId, tournamentId])
+}
+
+model Reward {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String
+  credits     Int
+  source      String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
