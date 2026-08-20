@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 
 const COOKIE = "attoflow_session";
 const TTL = 60 * 60 * 24 * 7;
+export const BOOTSTRAP_ADMIN_ID = "__attoflow_bootstrap_admin__";
 
 function secret() {
   return process.env.AUTH_SECRET || "dev-only-change-this-secret";
@@ -65,12 +66,34 @@ async function sessionUserId() {
   }
 }
 
+function bootstrapAdmin() {
+  const email = process.env.ADMIN_BOOTSTRAP_EMAIL?.trim().toLowerCase();
+  if (!email) return null;
+  const now = new Date();
+  return {
+    id: BOOTSTRAP_ADMIN_ID,
+    name: "Administrador AttoFlow",
+    email,
+    passwordHash: "",
+    nickname: "ADMIN",
+    freeFireUid: null,
+    phone: null,
+    role: "ADMIN" as const,
+    status: "ACTIVE" as const,
+    credits: 0,
+    referralCode: "ADMIN",
+    referredById: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export async function getCurrentUser() {
   const id = await sessionUserId();
   if (!id) return null;
 
-  // Public pages and the global navigation must never become a 500 page just
-  // because the production database is temporarily unavailable/unconfigured.
+  if (id === BOOTSTRAP_ADMIN_ID) return bootstrapAdmin();
+
   try {
     return await db.user.findUnique({ where: { id } });
   } catch (error) {
