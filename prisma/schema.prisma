@@ -7,10 +7,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role { USER ADMIN }
-enum UserStatus { ACTIVE BLOCKED }
-enum TournamentStatus { DRAFT OPEN LIVE FINISHED CANCELLED }
-enum RegistrationStatus { CONFIRMED CANCELLED WINNER }
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum TournamentStatus {
+  DRAFT
+  OPEN
+  LIVE
+  FINISHED
+  CANCELLED
+}
+
+enum RegistrationStatus {
+  CONFIRMED
+  CANCELLED
+  WINNER
+}
 
 model User {
   id             String         @id @default(cuid())
@@ -34,21 +53,21 @@ model User {
 }
 
 model Tournament {
-  id              String             @id @default(cuid())
-  title           String
-  slug            String             @unique
-  description     String
-  mode            String             @default("Squad")
-  map             String             @default("Bermuda")
-  maxPlayers      Int                @default(48)
-  entryCredits    Int                @default(0)
-  prizeCredits    Int                @default(0)
-  startsAt        DateTime
-  status          TournamentStatus   @default(DRAFT)
-  rules           String
-  registrations   Registration[]
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id             String            @id @default(cuid())
+  title          String
+  slug           String            @unique
+  description    String
+  mode           String            @default("Squad")
+  map            String            @default("Bermuda")
+  maxPlayers     Int               @default(48)
+  entryCredits   Int               @default(0)
+  prizeCredits   Int               @default(0)
+  startsAt       DateTime
+  status         TournamentStatus  @default(DRAFT)
+  rules          String
+  registrations  Registration[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 }
 
 model Registration {
@@ -61,6 +80,7 @@ model Registration {
   user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   tournament    Tournament          @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   createdAt     DateTime            @default(now())
+
   @@unique([userId, tournamentId])
 }
 
